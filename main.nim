@@ -29,9 +29,10 @@ bxy.addImage("fruit", readImage("assets/fruit/fruit.png"))
 
 var frame: int
 
-for num in 1..1000:
+for num in 1..50:
   randomize()
   gorbs.add(Gorb(
+    id: get_new_id(),
     alive: true,
     is_baby: false,
     position: vec2(

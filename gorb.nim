@@ -71,11 +71,25 @@ proc process_ai*(gorb: Gorb): Gorb =
 
     if gorb.energy <= 0.0:
       gorb.alive = false
+      gorb.death_timer = 2000
       echo "a gorb has died at (", gorb.position[0].round(), ",", gorb.position[1].round(), ")"
   
     return gorb
-
   else:
+    var gorb = gorb
+
+    gorb.death_timer -= 1
+    if gorb.death_timer <= 0:
+      var list_counter = 0
+      var found_self = false
+      for list_gorb in gorbs:
+        if list_gorb.id == gorb.id:
+          found_self = true
+          break
+        list_counter += 1
+      if found_self:
+        deletion_queue.add(list_counter)
+
     return gorb
 
 proc detect_eating*(gorb: Gorb): Gorb =
@@ -115,6 +129,7 @@ proc try_reproduce*(gorb: Gorb): Gorb =
 
     randomize()
     gorb_queue.add(Gorb(
+      id: get_new_id(),
       alive: true,
       is_baby: true,
       position: gorb.position,

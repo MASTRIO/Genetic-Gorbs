@@ -8,8 +8,10 @@ type
     WANDERING
 
   Gorb* = object
+    id*: int
     alive*: bool
     is_baby*: bool
+    death_timer*: int
     position*: Vec2
     target*: Vec2
     state*: GorbState
