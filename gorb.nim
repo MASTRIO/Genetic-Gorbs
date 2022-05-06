@@ -4,11 +4,14 @@ import game_objects
 import data
 
 proc process_ai*(gorb: Gorb): Gorb =
+  if gorb.is_baby:
+    echo gorb.state
+
   if gorb.alive:
     var gorb = gorb
 
     # Do something
-    if gorb.state == GorbState.NONE:
+    if gorb.state == GorbState.NONE or gorb.state == GorbState.BORN:
       try:
         randomize()
         var found_fruit = @[vec2(1000000000, 100000000)]
@@ -111,13 +114,13 @@ proc try_reproduce*(gorb: Gorb): Gorb =
     gorb.energy -= transfer_amount
 
     randomize()
-    new_gorbs.add(Gorb(
+    gorb_queue.add(Gorb(
       alive: true,
       is_baby: true,
       position: gorb.position,
       state: GorbState.NONE,
       energy: transfer_amount,
-      speed: gorb.speed + rand(-10..10) / 10
+      speed: gorb.speed + (rand(-10..10) / 10).round()
     ))
 
     echo "a child has been born at (", gorb.position[0].round(), ",", gorb.position[1].round(), ")"

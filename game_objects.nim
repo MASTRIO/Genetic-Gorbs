@@ -3,6 +3,7 @@ import windy
 type
   GorbState* = enum
     NONE
+    BORN
     GATHERING
     WANDERING
 

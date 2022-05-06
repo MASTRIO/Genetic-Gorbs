@@ -13,20 +13,23 @@ var paused = false
 var camera_offset = vec2(0, 0)
 let CAMERA_SPEED: float = 10
 
-let timer_max = 1
+let timer_max = 0
 var fruit_spawn_timer = timer_max
 var they_are_alive = true
 
 # Load the images.
-bxy.addImage("background", readImage("assets/background.png"))
-bxy.addImage("gorb", readImage("assets/gorb.png"))
-bxy.addImage("smol_gorb", readImage("assets/baby_gorb.png"))
-bxy.addImage("ded_gorb", readImage("assets/ded_gorb_sad.png"))
-bxy.addImage("fruit", readImage("assets/fruit.png"))
+bxy.addImage("background", readImage("assets/background/background.png"))
+bxy.addImage("gorb", readImage("assets/gorb/gorb.png"))
+bxy.addImage("smol_gorb", readImage("assets/baby/baby_gorb.png"))
+bxy.addImage("ded_gorb", readImage("assets/gorb/ded_gorb_sad.png"))
+bxy.addImage("ded_smol_gorb", readImage("assets/baby/ded_baby_pog.png"))
+bxy.addImage("gorb_gonna_die", readImage("assets/gorb/gorb_dying.png"))
+bxy.addImage("gorb_might_die", readImage("assets/gorb/gorb_dying_but_less.png"))
+bxy.addImage("fruit", readImage("assets/fruit/fruit.png"))
 
 var frame: int
 
-for num in 1..25:
+for num in 1..1000:
   randomize()
   gorbs.add(Gorb(
     alive: true,
@@ -58,16 +61,36 @@ proc update() =
     for gorb in gorbs:
       gorbs[gorb_count] = gorb.process_ai()
       gorbs[gorb_count] = gorb.detect_eating()
-      #gorbs[gorb_count] = gorb.try_reproduce()
+      gorbs[gorb_count] = gorb.try_reproduce()
       gorb_count += 1
+    
+    # Add gorbs from queue
+    try:
+      var queue_counter = 0
+      for gorb in gorb_queue:
+        gorbs.add(gorb)
+        gorb_queue.delete(queue_counter)
+        queue_counter += 1
+    except:
+      discard
+
+    # Delete discarded gorbs
+    try:
+      var queue_counter = 0
+      for pos in deletion_queue:
+        gorbs.delete(pos)
+        deletion_queue.delete(queue_counter)
+        queue_counter += 1
+    except:
+      discard
   
     # Fruit spawning
     if fruit_spawn_timer <= 0:
       randomize()
       fruits.add(Fruit(
         position: vec2(
-          rand(-100..1000).toFloat(), #rand(10..toInt(window.size.vec2[0] - 10)).toFloat(),
-          rand(-100..1000).toFloat() #rand(10..toInt(window.size.vec2[1] - 10)).toFloat()
+          rand(-2000..2000).toFloat(), #rand(10..toInt(window.size.vec2[0] - 10)).toFloat(),
+          rand(-2000..2000).toFloat() #rand(10..toInt(window.size.vec2[1] - 10)).toFloat()
         )
       ))
       fruit_spawn_timer = timer_max
@@ -115,7 +138,7 @@ proc update() =
   if window.buttonPressed[Button.KeyI]:
     echo gorbs
   if window.buttonPressed[Button.KeyU]:
-    echo new_gorbs
+    echo gorb_queue
 
 # Called when it is time to draw a new frame.
 proc draw() =
@@ -127,16 +150,50 @@ proc draw() =
   bxy.drawImage("background", center, 0)
 
   for fruit in fruits:
-    bxy.drawImage("fruit", fruit.position + camera_offset, 0)
+    if
+      fruit.position[0] > -camera_offset[0] and
+      fruit.position[1] > -camera_offset[1] and
+      fruit.position[0] < window.size.vec2[0] - camera_offset[0] and
+      fruit.position[1] < window.size.vec2[1] - camera_offset[1]
+      :
+      bxy.drawImage("fruit", fruit.position + camera_offset, 0)
 
   for gorb in gorbs:
-    if gorb.alive:
-      if gorb.is_baby:
-        bxy.drawImage("smol_gorb", gorb.position + camera_offset, 0)
+    if
+      gorb.position[0] > -camera_offset[0] and
+      gorb.position[1] > -camera_offset[1] and
+      gorb.position[0] < window.size.vec2[0] - camera_offset[0] and
+      gorb.position[1] < window.size.vec2[1] - camera_offset[1]
+      :
+      if gorb.alive:
+        if gorb.is_baby:
+          bxy.drawImage("smol_gorb", gorb.position + camera_offset, 0)
+        else:
+          if gorb.energy < 4:
+            bxy.drawImage("gorb_gonna_die", gorb.position + camera_offset, -0.6)
+          elif gorb.energy < 2:
+            bxy.drawImage("gorb_gonna_die", gorb.position + camera_offset, -0.54)
+          elif gorb.energy < 3:
+            bxy.drawImage("gorb_gonna_die", gorb.position + camera_offset, -0.48)
+          elif gorb.energy < 4:
+            bxy.drawImage("gorb_gonna_die", gorb.position + camera_offset, -0.42)
+          elif gorb.energy < 5:
+            bxy.drawImage("gorb_gonna_die", gorb.position + camera_offset, -0.4)
+          elif gorb.energy < 10:
+            bxy.drawImage("gorb_gonna_die", gorb.position + camera_offset, -0.3)
+          elif gorb.energy < 20:
+            bxy.drawImage("gorb_gonna_die", gorb.position + camera_offset, -0.2)
+          elif gorb.energy < 30:
+            bxy.drawImage("gorb_gonna_die", gorb.position + camera_offset, -0.1)
+          elif gorb.energy < 50:
+            bxy.drawImage("gorb_might_die", gorb.position + camera_offset, 0)
+          else:
+            bxy.drawImage("gorb", gorb.position + camera_offset, 0)
       else:
-        bxy.drawImage("gorb", gorb.position + camera_offset, 0)
-    else:
-      bxy.drawImage("ded_gorb", gorb.position + camera_offset, 0)
+        if gorb.is_baby:
+          bxy.drawImage("ded_smol_gorb", gorb.position + camera_offset, 0)
+        else:
+          bxy.drawImage("ded_gorb", gorb.position + camera_offset, 0)
 
   # End frame
   bxy.endFrame()
