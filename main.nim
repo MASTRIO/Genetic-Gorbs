@@ -1,6 +1,6 @@
 import std/random
 import boxy, opengl, windy
-import gorb, fruit
+import gorb, data, game_objects
 
 let windowSize = ivec2(1000, 600)
 let window = newWindow("Genetic gorbs", windowSize)
@@ -11,30 +11,16 @@ let bxy = newBoxy()
 var paused = false
 
 var camera_offset = vec2(0, 0)
-let CAMERA_SPEED: float = 5
+let CAMERA_SPEED: float = 10
 
-var fruit_spawn_timer = 30
+let timer_max = 1
+var fruit_spawn_timer = timer_max
 var they_are_alive = true
-
-var gorbs = @[
-  Gorb(
-    alive: true,
-    position: window.size.vec2 / 2,
-    state: GorbState.NONE,
-    energy: 100.0,
-    speed: 3.0
-  )
-]
-
-var fruits = @[
-  Fruit(
-    position: window.size.vec2 / 2
-  )
-]
 
 # Load the images.
 bxy.addImage("background", readImage("assets/background.png"))
 bxy.addImage("gorb", readImage("assets/gorb.png"))
+bxy.addImage("smol_gorb", readImage("assets/baby_gorb.png"))
 bxy.addImage("ded_gorb", readImage("assets/ded_gorb_sad.png"))
 bxy.addImage("fruit", readImage("assets/fruit.png"))
 
@@ -44,6 +30,7 @@ for num in 1..25:
   randomize()
   gorbs.add(Gorb(
     alive: true,
+    is_baby: false,
     position: vec2(
       rand(0..800).toFloat(),
       rand(0..500).toFloat()
@@ -66,12 +53,12 @@ for fruit_num in 1..200:
 proc update() =
   if not paused:
 
-    # Move gorbs
+    # process gorbs
     var gorb_count = 0
     for gorb in gorbs:
-      gorbs[gorb_count] = gorb.process_ai(fruits)
-      (gorbs[gorb_count], fruits) = gorb.detect_eating(fruits)
-      #(gorbs[gorb_count], gorbs) = gorb.reproduce(gorbs)
+      gorbs[gorb_count] = gorb.process_ai()
+      gorbs[gorb_count] = gorb.detect_eating()
+      #gorbs[gorb_count] = gorb.try_reproduce()
       gorb_count += 1
   
     # Fruit spawning
@@ -83,7 +70,7 @@ proc update() =
           rand(-100..1000).toFloat() #rand(10..toInt(window.size.vec2[1] - 10)).toFloat()
         )
       ))
-      fruit_spawn_timer = 30
+      fruit_spawn_timer = timer_max
     else:
       fruit_spawn_timer -= 1
   
@@ -125,6 +112,10 @@ proc update() =
     else:
       paused = true
       echo "paused"
+  if window.buttonPressed[Button.KeyI]:
+    echo gorbs
+  if window.buttonPressed[Button.KeyU]:
+    echo new_gorbs
 
 # Called when it is time to draw a new frame.
 proc draw() =
@@ -140,7 +131,10 @@ proc draw() =
 
   for gorb in gorbs:
     if gorb.alive:
-      bxy.drawImage("gorb", gorb.position + camera_offset, 0)
+      if gorb.is_baby:
+        bxy.drawImage("smol_gorb", gorb.position + camera_offset, 0)
+      else:
+        bxy.drawImage("gorb", gorb.position + camera_offset, 0)
     else:
       bxy.drawImage("ded_gorb", gorb.position + camera_offset, 0)
 

@@ -1,25 +1,9 @@
 import std/random
 import boxy, windy
-import fruit
+import game_objects
+import data
 
-type
-  GorbState* = enum
-    NONE
-    GATHERING
-    WANDERING
-
-  Gorb* = object
-    alive*: bool
-    position*: Vec2
-    target*: Vec2
-    state*: GorbState
-    wandering_timer*: int
-    wandering_direction*: int
-    view_range*: int
-    energy*: float
-    speed*: float
-
-proc process_ai*(gorb: Gorb, fruits: seq[Fruit]): Gorb =
+proc process_ai*(gorb: Gorb): Gorb =
   if gorb.alive:
     var gorb = gorb
 
@@ -91,9 +75,8 @@ proc process_ai*(gorb: Gorb, fruits: seq[Fruit]): Gorb =
   else:
     return gorb
 
-proc detect_eating*(gorb: Gorb, fruits: seq[Fruit]): (Gorb, seq[Fruit]) =
+proc detect_eating*(gorb: Gorb): Gorb =
   var gorb = gorb
-  var fruits = fruits
 
   if 
     gorb.state == GorbState.GATHERING and
@@ -101,8 +84,8 @@ proc detect_eating*(gorb: Gorb, fruits: seq[Fruit]): (Gorb, seq[Fruit]) =
     gorb.position[0] > gorb.target[0] - 10 and
     gorb.position[1] < gorb.target[1] + 10 and
     gorb.position[1] > gorb.target[1] - 10
-    :
-
+   :
+  
     var counter = 0
     var found = false
     for fruit in fruits:
@@ -112,16 +95,15 @@ proc detect_eating*(gorb: Gorb, fruits: seq[Fruit]): (Gorb, seq[Fruit]) =
       counter += 1
     if found:
       fruits.delete(counter)
-
+  
     gorb.energy += 10.0
     gorb.state = GorbState.NONE
 
-  return (gorb, fruits)
+  return gorb
 
-proc reproduce*(gorb: Gorb, gorbs: seq[Gorb]): (Gorb, seq[Gorb]) =
+proc try_reproduce*(gorb: Gorb): Gorb =
   if gorb.alive and gorb.energy > 200:
     var gorb = gorb
-    var gorbs = gorbs
 
     randomize()
     let transfer_amount = rand(60..140).toFloat()
@@ -129,16 +111,17 @@ proc reproduce*(gorb: Gorb, gorbs: seq[Gorb]): (Gorb, seq[Gorb]) =
     gorb.energy -= transfer_amount
 
     randomize()
-    gorbs.add(Gorb(
+    new_gorbs.add(Gorb(
       alive: true,
+      is_baby: true,
       position: gorb.position,
       state: GorbState.NONE,
       energy: transfer_amount,
       speed: gorb.speed + rand(-10..10) / 10
     ))
 
-    echo "a child has been born"
+    echo "a child has been born at (", gorb.position[0].round(), ",", gorb.position[1].round(), ")"
 
-    return (gorb, gorbs)
+    return gorb
   
-  return (gorb, gorbs)
+  return gorb
