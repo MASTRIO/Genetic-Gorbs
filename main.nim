@@ -13,7 +13,7 @@ var paused = false
 var camera_offset = vec2(0, 0)
 let CAMERA_SPEED: float = 10
 
-let timer_max = 0
+let timer_max = 5
 var fruit_spawn_timer = timer_max
 var they_are_alive = true
 
@@ -33,18 +33,19 @@ bxy.addImage("gorb_might_die", readImage("assets/gorb/gorb_dying_but_less.png"))
 bxy.addImage("fruit", readImage("assets/fruit/fruit.png"))
 
 bxy.addImage("tree", readImage("assets/plants/tree.png"))
+bxy.addImage("ded_tree", readImage("assets/plants/dead_tree.png"))
 
 var frame: int
 
-for num in 1..50:
+for num in 1..100:
   randomize()
   gorbs.add(Gorb(
     id: get_new_id(),
     alive: true,
     is_baby: false,
     position: vec2(
-      rand(0..800).toFloat(),
-      rand(0..500).toFloat()
+      rand(-1000..1000).toFloat(),
+      rand(-1000..1000).toFloat()
     ),
     state: GorbState.NONE,
     energy: rand(40..180).toFloat(),
@@ -52,7 +53,7 @@ for num in 1..50:
     view_range: rand(200..350)
   ))
 
-for fruit_num in 1..200:
+for fruit_num in 1..500:
   randomize()
   fruits.add(Fruit(
     position: vec2(
@@ -60,6 +61,19 @@ for fruit_num in 1..200:
       rand(-1000..1500).toFloat() #rand(10..toInt(window.size.vec2[1] - 10)).toFloat()
     )
   ))
+
+for tree_num in 1..30:
+  randomize()
+  trees.add(
+    Tree(
+      alive: true,
+      position: vec2(
+        rand(-1500..1500).toFloat(),
+        rand(-1500..1500).toFloat()
+      ),
+      life_remaining: 10000
+    )
+  )
 
 proc update() =
   if not paused:
@@ -105,6 +119,26 @@ proc update() =
     else:
       fruit_spawn_timer -= 1
   
+    # Tree fruit spawning
+    var tree_counter = 0
+    for tree in trees:
+      randomize()
+      var chance_of_fruit = rand(20)
+      if chance_of_fruit == 0:
+        randomize()
+        fruits.add(Fruit(
+          position: vec2(
+            rand((tree.position[0] - 100)..(tree.position[0] + 100)),
+            rand((tree.position[1] + 60 - 100)..(tree.position[1] + 60 + 100))
+          )
+        ))
+
+      trees[tree_counter].life_remaining -= 1
+      if tree.life_remaining <= 0:
+        trees[tree_counter].alive = false
+
+      tree_counter += 1
+
     # are they dead?
     if they_are_alive:
       var a_gorb_lives = false
@@ -208,7 +242,10 @@ proc draw() =
 
   for tree in trees:
     if on_screen(tree.position, window.size.vec2, camera_offset):
-      bxy.drawImage("tree", tree.position + camera_offset, 0)
+      if tree.alive:
+        bxy.drawImage("tree", tree.position + camera_offset, 0)
+      else:
+        bxy.drawImage("ded_tree", tree.position + camera_offset, 0)
 
   # End frame
   bxy.endFrame()

@@ -25,5 +25,6 @@ type
     position*: Vec2
   
   Tree* = object
+    alive*: bool
     position*: Vec2
     life_remaining*: int
