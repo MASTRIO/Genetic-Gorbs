@@ -23,3 +23,7 @@ type
 
   Fruit* = object
     position*: Vec2
+  
+  Tree* = object
+    position*: Vec2
+    life_remaining*: int

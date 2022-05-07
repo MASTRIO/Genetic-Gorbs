@@ -4,8 +4,8 @@ import game_objects
 import data
 
 proc process_ai*(gorb: Gorb): Gorb =
-  if gorb.is_baby:
-    echo gorb.state
+  #if gorb.is_baby:
+  #  echo gorb.state
 
   if gorb.alive:
     var gorb = gorb

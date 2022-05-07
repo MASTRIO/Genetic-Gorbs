@@ -1,6 +1,6 @@
 import std/random
 import boxy, opengl, windy
-import gorb, data, game_objects
+import gorb, data, game_objects, tools
 
 let windowSize = ivec2(1000, 600)
 let window = newWindow("Genetic gorbs", windowSize)
@@ -19,13 +19,20 @@ var they_are_alive = true
 
 # Load the images.
 bxy.addImage("background", readImage("assets/background/background.png"))
+
 bxy.addImage("gorb", readImage("assets/gorb/gorb.png"))
 bxy.addImage("smol_gorb", readImage("assets/baby/baby_gorb.png"))
+
 bxy.addImage("ded_gorb", readImage("assets/gorb/ded_gorb_sad.png"))
 bxy.addImage("ded_smol_gorb", readImage("assets/baby/ded_baby_pog.png"))
+
 bxy.addImage("gorb_gonna_die", readImage("assets/gorb/gorb_dying.png"))
+
 bxy.addImage("gorb_might_die", readImage("assets/gorb/gorb_dying_but_less.png"))
+
 bxy.addImage("fruit", readImage("assets/fruit/fruit.png"))
+
+bxy.addImage("tree", readImage("assets/plants/tree.png"))
 
 var frame: int
 
@@ -71,9 +78,10 @@ proc update() =
       for gorb in gorb_queue:
         gorbs.add(gorb)
         gorb_queue.delete(queue_counter)
+        echo "added gorb from queue position ", queue_counter
+        echo gorb_queue
         queue_counter += 1
-    except:
-      discard
+    except: discard
 
     # Delete discarded gorbs
     try:
@@ -82,8 +90,7 @@ proc update() =
         gorbs.delete(pos)
         deletion_queue.delete(queue_counter)
         queue_counter += 1
-    except:
-      discard
+    except: discard
   
     # Fruit spawning
     if fruit_spawn_timer <= 0:
@@ -122,13 +129,7 @@ proc update() =
   if window.buttonPressed[Button.KeySpace]:
     camera_offset = vec2(0, 0)
   
-  # Debug tools
-  if window.buttonPressed[Button.KeyO]:
-    var living_gorbs = 0
-    for gorb in gorbs:
-      if gorb.alive:
-        living_gorbs += 1
-    echo "There are ", living_gorbs, " gorbs still alive"
+  # Pause control
   if window.buttonPressed[Button.KeyP]:
     if paused:
       paused = false
@@ -136,10 +137,29 @@ proc update() =
     else:
       paused = true
       echo "paused"
-  if window.buttonPressed[Button.KeyI]:
-    echo gorbs
-  if window.buttonPressed[Button.KeyU]:
-    echo gorb_queue
+
+  # Commands
+  if window.buttonPressed[Button.KeySlash]:
+    paused = true
+    echo "\nEnter a command:"
+    var command_input = readline(stdin)
+    var command = command_input.split(".".toRunes())
+    
+    case command[0]:
+    # Check stats command
+    of "check":
+      case command[1]:
+      # Check how many are alive
+      of "alive":
+        var living_gorbs = 0
+        for gorb in gorbs:
+          if gorb.alive:
+            living_gorbs += 1
+        echo "There are ", living_gorbs, " gorbs still alive"
+      else:
+        echo "ERROR: invalid argument '", command[1], "'"
+    else:
+      echo "ERROR: command not recognised"
 
 # Called when it is time to draw a new frame.
 proc draw() =
@@ -151,21 +171,11 @@ proc draw() =
   bxy.drawImage("background", center, 0)
 
   for fruit in fruits:
-    if
-      fruit.position[0] > -camera_offset[0] and
-      fruit.position[1] > -camera_offset[1] and
-      fruit.position[0] < window.size.vec2[0] - camera_offset[0] and
-      fruit.position[1] < window.size.vec2[1] - camera_offset[1]
-      :
+    if on_screen(fruit.position, window.size.vec2, camera_offset):
       bxy.drawImage("fruit", fruit.position + camera_offset, 0)
 
   for gorb in gorbs:
-    if
-      gorb.position[0] > -camera_offset[0] and
-      gorb.position[1] > -camera_offset[1] and
-      gorb.position[0] < window.size.vec2[0] - camera_offset[0] and
-      gorb.position[1] < window.size.vec2[1] - camera_offset[1]
-      :
+    if on_screen(gorb.position, window.size.vec2, camera_offset):
       if gorb.alive:
         if gorb.is_baby:
           bxy.drawImage("smol_gorb", gorb.position + camera_offset, 0)
@@ -195,6 +205,10 @@ proc draw() =
           bxy.drawImage("ded_smol_gorb", gorb.position + camera_offset, 0)
         else:
           bxy.drawImage("ded_gorb", gorb.position + camera_offset, 0)
+
+  for tree in trees:
+    if on_screen(tree.position, window.size.vec2, camera_offset):
+      bxy.drawImage("tree", tree.position + camera_offset, 0)
 
   # End frame
   bxy.endFrame()

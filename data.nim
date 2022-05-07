@@ -38,3 +38,10 @@ var fruits* = @[
     position: vec2(0, 0)
   )
 ]
+
+var trees* = @[
+  Tree(
+    position: vec2(0, 0),
+    life_remaining: 100
+  )
+]
