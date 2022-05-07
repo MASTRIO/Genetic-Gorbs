@@ -4,14 +4,17 @@ import game_objects
 import data
 
 proc process_ai*(gorb: Gorb): Gorb =
-  #if gorb.is_baby:
-  #  echo gorb.state
-
   if gorb.alive:
     var gorb = gorb
 
+    # Age baby
+    if gorb.is_baby:
+      gorb.baby_time -= 1
+      if gorb.baby_time <= 0:
+        gorb.is_baby = false
+
     # Do something
-    if gorb.state == GorbState.NONE or gorb.state == GorbState.BORN:
+    if gorb.state == GorbState.NONE or gorb.state == GorbState.WANDERING:
       try:
         randomize()
         var found_fruit = @[vec2(1000000000, 100000000)]
@@ -27,6 +30,8 @@ proc process_ai*(gorb: Gorb): Gorb =
           randomize()
           gorb.target = found_fruit[rand(found_fruit.len() - 1)]
           gorb.state = GorbState.GATHERING
+        else:
+          gorb.state = GorbState.WANDERING
       except:
         gorb.state = GorbState.WANDERING
 
@@ -40,16 +45,20 @@ proc process_ai*(gorb: Gorb): Gorb =
 
       if fruit_exists:
         if gorb.target[0] > gorb.position[0]:
-          gorb.position[0] += gorb.speed
+          if gorb.is_baby: gorb.position[0] += gorb.speed / 2
+          else: gorb.position[0] += gorb.speed
         if gorb.target[0] < gorb.position[0]:
-          gorb.position[0] -= gorb.speed
+          if gorb.is_baby: gorb.position[0] -= gorb.speed / 2
+          else: gorb.position[0] -= gorb.speed
         if gorb.target[1] > gorb.position[1]:
-          gorb.position[1] += gorb.speed
+          if gorb.is_baby: gorb.position[1] += gorb.speed / 2
+          else: gorb.position[1] += gorb.speed
         if gorb.target[1] < gorb.position[1]:
-          gorb.position[1] -= gorb.speed
+          if gorb.is_baby: gorb.position[1] -= gorb.speed / 2
+          else: gorb.position[1] -= gorb.speed
       else:
         gorb.state = GorbState.NONE
-    
+
     elif gorb.state == GorbState.WANDERING and gorb.wandering_timer <= 0:
       randomize()
       gorb.wandering_direction = rand(1..4)
@@ -58,13 +67,13 @@ proc process_ai*(gorb: Gorb): Gorb =
     
     elif gorb.state == GorbState.WANDERING and gorb.wandering_timer > 0:
       if gorb.wandering_direction == 1:
-        gorb.position[0] += gorb.speed / 1.5
+        gorb.position[0] += gorb.speed / 2
       elif gorb.wandering_direction == 2:
-        gorb.position[0] -= gorb.speed / 1.5
+        gorb.position[0] -= gorb.speed / 2
       elif gorb.wandering_direction == 3:
-        gorb.position[1] += gorb.speed / 1.5
+        gorb.position[1] += gorb.speed / 2
       elif gorb.wandering_direction == 4:
-        gorb.position[1] -= gorb.speed / 1.5
+        gorb.position[1] -= gorb.speed / 2
       gorb.wandering_timer -= 1
   
     gorb.energy -= 0.1
@@ -119,7 +128,7 @@ proc detect_eating*(gorb: Gorb): Gorb =
   return gorb
 
 proc try_reproduce*(gorb: Gorb): Gorb =
-  if gorb.alive and gorb.energy > 200:
+  if gorb.alive and gorb.energy > 350:
     var gorb = gorb
 
     randomize()
@@ -132,10 +141,12 @@ proc try_reproduce*(gorb: Gorb): Gorb =
       id: get_new_id(),
       alive: true,
       is_baby: true,
+      baby_time: rand(1000..5000),
       position: gorb.position,
       state: GorbState.NONE,
       energy: transfer_amount,
-      speed: gorb.speed + (rand(-10..10) / 10).round()
+      speed: gorb.speed + (rand(-5..5) / 10).round(),
+      view_range: gorb.view_range + rand(-15..15)
     ))
 
     echo "a child has been born at (", gorb.position[0].round(), ",", gorb.position[1].round(), ")"

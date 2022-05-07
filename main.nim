@@ -13,7 +13,7 @@ var paused = false
 var camera_offset = vec2(0, 0)
 let CAMERA_SPEED: float = 10
 
-let timer_max = 5
+let timer_max = 2
 var fruit_spawn_timer = timer_max
 var they_are_alive = true
 
@@ -50,7 +50,7 @@ for num in 1..100:
     state: GorbState.NONE,
     energy: rand(40..180).toFloat(),
     speed: rand(1..60) / 10,
-    view_range: rand(200..350)
+    view_range: rand(100..200)
   ))
 
 for fruit_num in 1..500:
@@ -92,8 +92,8 @@ proc update() =
       for gorb in gorb_queue:
         gorbs.add(gorb)
         gorb_queue.delete(queue_counter)
-        echo "added gorb from queue position ", queue_counter
-        echo gorb_queue
+        #echo "added gorb from queue position ", queue_counter
+        #echo gorb_queue
         queue_counter += 1
     except: discard
 
@@ -111,8 +111,8 @@ proc update() =
       randomize()
       fruits.add(Fruit(
         position: vec2(
-          rand(-2000..2000).toFloat(), #rand(10..toInt(window.size.vec2[0] - 10)).toFloat(),
-          rand(-2000..2000).toFloat() #rand(10..toInt(window.size.vec2[1] - 10)).toFloat()
+          rand(-4000..4000).toFloat(), #rand(10..toInt(window.size.vec2[0] - 10)).toFloat(),
+          rand(-4000..4000).toFloat() #rand(10..toInt(window.size.vec2[1] - 10)).toFloat()
         )
       ))
       fruit_spawn_timer = timer_max
@@ -122,20 +122,21 @@ proc update() =
     # Tree fruit spawning
     var tree_counter = 0
     for tree in trees:
-      randomize()
-      var chance_of_fruit = rand(20)
-      if chance_of_fruit == 0:
+      if tree.alive:
         randomize()
-        fruits.add(Fruit(
-          position: vec2(
-            rand((tree.position[0] - 100)..(tree.position[0] + 100)),
-            rand((tree.position[1] + 60 - 100)..(tree.position[1] + 60 + 100))
-          )
-        ))
-
-      trees[tree_counter].life_remaining -= 1
-      if tree.life_remaining <= 0:
-        trees[tree_counter].alive = false
+        var chance_of_fruit = rand(30)
+        if chance_of_fruit == 0:
+          randomize()
+          fruits.add(Fruit(
+            position: vec2(
+              rand((tree.position[0] - 150)..(tree.position[0] + 150)),
+              rand((tree.position[1] + 60 - 150)..(tree.position[1] + 60 + 150))
+            )
+          ))
+        
+        trees[tree_counter].life_remaining -= 1
+        if tree.life_remaining <= 0:
+          trees[tree_counter].alive = false
 
       tree_counter += 1
 

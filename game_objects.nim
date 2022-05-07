@@ -11,6 +11,7 @@ type
     id*: int
     alive*: bool
     is_baby*: bool
+    baby_time*: int
     death_timer*: int
     position*: Vec2
     target*: Vec2

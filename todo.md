@@ -1,8 +1,8 @@
 # Todo
-- [ ] Make children functioning members of society
+- [X] Make children functioning members of society
 - [ ] add sex
 - [ ] add tree sex
-- [ ] fix wandering ai
+- [X] fix wandering AI
 - [ ] add quirks
 - [ ] add day/night cycle
 - [ ] add wolves
@@ -13,3 +13,6 @@
   - [ ] energy_expenditure
 - [ ] frame independence
 - [X] tree spawning + fruit spawning
+- [ ] stop underage sex
+- [ ] baby dying sprites
+- [X] stop dead trees from producing apples
