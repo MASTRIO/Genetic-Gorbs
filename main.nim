@@ -24,6 +24,8 @@ var frame: int
 bxy.addImage("gorb", readImage("assets/gorb/gorb.png"))
 bxy.addImage("smol_gorb", readImage("assets/baby/baby_gorb.png"))
 
+bxy.addImage("legged_gorb", readImage("assets/gorb/gorb_with_legs.png"))
+
 bxy.addImage("ded_gorb", readImage("assets/gorb/ded_gorb_sad.png"))
 bxy.addImage("ded_smol_gorb", readImage("assets/baby/ded_baby_pog.png"))
 
@@ -39,6 +41,8 @@ for num in 1..100:
   randomize()
   gorbs.add(Gorb(
     id: get_new_id(),
+    leg_1_pos: vec2(18, 32),
+    leg_2_pos: vec2(46, 32),
     alive: true,
     is_baby: false,
     position: vec2(
@@ -96,6 +100,7 @@ proc update() =
       gorbs[gorb_count] = gorb.process_ai()
       gorbs[gorb_count] = gorb.detect_eating()
       gorbs[gorb_count] = gorb.try_reproduce()
+      gorbs[gorb_count] = gorb.process_legs()
       gorb_count += 1
     
     # Add gorbs from queue
@@ -239,13 +244,11 @@ proc draw() =
           if gorb.is_baby:
             bxy.drawImage("smol_gorb", gorb.position + camera_offset, 0, gorb.colour_tint)
           else:
-            bxy.drawImage("gorb", gorb.position + camera_offset, 0, gorb.colour_tint)
-            try:
-              # left
-              draw_leg(bxy, gorb.position + camera_offset + vec2(-19, 23), vec2(17, 32))
-              # right
-              draw_leg(bxy, gorb.position + camera_offset + vec2(18, 23), vec2(17, 32))
-            except: discard
+            if leg_count < max_legs:
+              draw_legs(bxy, gorb.position + camera_offset + vec2(0, 20), gorb.leg_1_pos, gorb.leg_2_pos)
+              bxy.drawImage("gorb", gorb.position + camera_offset, 0, gorb.colour_tint)
+            else:
+              bxy.drawImage("legged_gorb", gorb.position + camera_offset, 0, gorb.colour_tint)
         else:
           if gorb.is_baby:
             bxy.drawImage("sleeping_smol_gorb", gorb.position + camera_offset, 0, gorb.colour_tint)

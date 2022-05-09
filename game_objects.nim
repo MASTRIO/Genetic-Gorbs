@@ -9,8 +9,9 @@ type
 
   Gorb* = object
     id*: int
-    leg_1_pos*: float
-    leg_2_pos*: float
+    leg_1_pos*: Vec2
+    leg_2_pos*: Vec2
+    previous_position*: Vec2
     alive*: bool
     colour_tint*: Color
     is_baby*: bool

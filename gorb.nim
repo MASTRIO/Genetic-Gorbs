@@ -189,3 +189,41 @@ proc try_reproduce*(gorb: Gorb): Gorb =
     return gorb
   
   return gorb
+
+proc process_legs*(gorb: Gorb): Gorb =
+  var gorb = gorb
+  if gorb.previous_position != gorb.position:
+    if gorb.previous_position[0] < gorb.position[0]:
+      gorb.leg_1_pos[0] -= 1
+      gorb.leg_2_pos[0] -= 1
+    elif gorb.previous_position[0] > gorb.position[0]:
+      gorb.leg_1_pos[0] += 1
+      gorb.leg_2_pos[0] += 1
+    if gorb.previous_position[1] < gorb.position[1]:
+      gorb.leg_1_pos[1] -= 1
+      gorb.leg_2_pos[1] -= 1
+    elif gorb.previous_position[1] > gorb.position[1]:
+      gorb.leg_1_pos[1] += 1
+      gorb.leg_2_pos[1] += 1
+    
+    gorb.previous_position = gorb.position
+  
+  if gorb.leg_1_pos[0] <= 32:
+    gorb.leg_1_pos[0] = 18
+  elif gorb.leg_1_pos[0] >= 64:
+    gorb.leg_1_pos[0] = 18
+  if gorb.leg_1_pos[1] <= 0:
+    gorb.leg_1_pos[1] = 20
+  elif gorb.leg_1_pos[1] >= 32:
+    gorb.leg_1_pos[1] = 20
+  
+  if gorb.leg_2_pos[0] <= 32:
+    gorb.leg_2_pos[0] = 46
+  elif gorb.leg_2_pos[0] >= 64:
+    gorb.leg_2_pos[0] = 46
+  if gorb.leg_2_pos[1] <= 0:
+    gorb.leg_2_pos[1] = 20
+  elif gorb.leg_2_pos[1] >= 32:
+    gorb.leg_2_pos[1] = 20
+
+  return gorb

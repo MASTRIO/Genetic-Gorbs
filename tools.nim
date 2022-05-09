@@ -19,16 +19,15 @@ proc on_screen*(object_pos: Vec2, window_size: Vec2, camera_pos: Vec2): bool =
 #  boxy.addImage("line", image)
 #  boxy.drawImage("line", image_pos, 0)
 
-proc draw_leg*(boxy: Boxy, image_pos: Vec2, foot: Vec2) =
-  if leg_count < max_legs:
-    try:
-      let leg = newImage(32, 32)
-      let ctx = newContext(leg)
-      #leg.fill(rgba(0, 0, 0, 0))
+proc draw_legs*(boxy: Boxy, image_pos: Vec2, foot_1: Vec2, foot_2: Vec2) =
+  let leg = newImage(64, 32)
+  let ctx = newContext(leg)
+  #leg.fill(rgba(0, 0, 0, 0))
 
-      ctx.strokeSegment(segment(vec2(17, 0), foot))
-      boxy.addImage("line", leg)
-      boxy.drawImage("line", image_pos, 0)
+  ctx.strokeSegment(segment(vec2(18, 0), foot_1))
+  ctx.strokeSegment(segment(vec2(46, 0), foot_2))
 
-      leg_count += 1
-    except: discard
+  boxy.addImage("legs", leg)
+  boxy.drawImage("legs", image_pos, 0)
+
+  leg_count += 1
