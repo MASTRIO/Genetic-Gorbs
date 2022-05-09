@@ -1,8 +1,11 @@
 import game_objects
-import windy
+import windy, pixie
 
 var time* = 0
 var is_day* = true
+
+var max_legs* = 10
+var leg_count* = 0
 
 var next_gorb_id = 0
 
@@ -16,7 +19,7 @@ var gorbs* = @[
     is_baby: false,
     position: vec2(0, 0),
     state: GorbState.NONE,
-    energy: 100.0,
+    energy: 1.0,
     speed: 3.0
   )
 ]

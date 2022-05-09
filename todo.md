@@ -1,16 +1,16 @@
 # Todo
 - [X] Make children functioning members of society
 - [ ] add sex
-- [ ] add tree sex
+- [ ] add tree growing
 - [X] fix wandering AI
 - [ ] add quirks
-- [ ] add day/night cycle
+- [X] add day/night cycle
 - [ ] add wolves
 - [ ] add amogus
-- [ ] add more stats to Gorbs
-  - [ ] patience
-  - [ ] sleep_requirement
-  - [ ] energy_expenditure
+- [X] add more stats to Gorbs
+  - [X] patience
+  - [X] sleep_requirement
+  - [X] energy_expenditure
 - [ ] frame independence
 - [X] tree spawning + fruit spawning
 - [X] stop underage sex

@@ -21,6 +21,9 @@
 - Cannibal
   - Eats other Gorbs
 
+- 1 Legged
+  - Permenently walks at half speed
+
 # Other Ideas
 - Day/Night cycle
   - 5-10 min cycle

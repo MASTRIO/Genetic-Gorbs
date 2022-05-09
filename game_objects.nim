@@ -9,6 +9,8 @@ type
 
   Gorb* = object
     id*: int
+    leg_1_pos*: float
+    leg_2_pos*: float
     alive*: bool
     colour_tint*: Color
     is_baby*: bool
@@ -22,6 +24,9 @@ type
     view_range*: int
     energy*: float
     speed*: float
+    sleep_requirement*: float
+    energy_expenditure*: float
+    patience*: int
 
   Fruit* = object
     position*: Vec2

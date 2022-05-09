@@ -18,6 +18,8 @@ let timer_max = 2
 var fruit_spawn_timer = timer_max
 var they_are_alive = true
 
+var frame: int
+
 # Load the images.
 bxy.addImage("gorb", readImage("assets/gorb/gorb.png"))
 bxy.addImage("smol_gorb", readImage("assets/baby/baby_gorb.png"))
@@ -33,8 +35,6 @@ bxy.addImage("fruit", readImage("assets/fruit/fruit.png"))
 bxy.addImage("tree", readImage("assets/plants/tree.png"))
 bxy.addImage("ded_tree", readImage("assets/plants/dead_tree.png"))
 
-var frame: int
-
 for num in 1..100:
   randomize()
   gorbs.add(Gorb(
@@ -48,7 +48,10 @@ for num in 1..100:
     state: GorbState.NONE,
     energy: rand(40..180).toFloat(),
     speed: rand(1..60) / 10,
-    view_range: rand(100..200)
+    view_range: rand(100..200),
+    sleep_requirement: rand(80..100).toFloat(),
+    energy_expenditure: rand(0.05..0.5),
+    patience: rand(60..120)
   ))
 
 for fruit_num in 1..500:
@@ -73,12 +76,14 @@ for tree_num in 1..30:
     )
   )
 
+gorbs.delete(0)
+
 proc update() =
   if not paused:
 
     # Day / Night cycle
     time += 1
-    if time >= 2400:
+    if time >= 500: #2400:
       if is_day:
         is_day = false
       else:
@@ -213,6 +218,7 @@ proc update() =
 # Called when it is time to draw a new frame.
 proc draw() =
   #let center = window.size.vec2 / 2
+  leg_count = 0
 
   # Start rendering new frame
   bxy.beginFrame(window.size)
@@ -234,6 +240,12 @@ proc draw() =
             bxy.drawImage("smol_gorb", gorb.position + camera_offset, 0, gorb.colour_tint)
           else:
             bxy.drawImage("gorb", gorb.position + camera_offset, 0, gorb.colour_tint)
+            try:
+              # left
+              draw_leg(bxy, gorb.position + camera_offset + vec2(-19, 23), vec2(17, 32))
+              # right
+              draw_leg(bxy, gorb.position + camera_offset + vec2(18, 23), vec2(17, 32))
+            except: discard
         else:
           if gorb.is_baby:
             bxy.drawImage("sleeping_smol_gorb", gorb.position + camera_offset, 0, gorb.colour_tint)

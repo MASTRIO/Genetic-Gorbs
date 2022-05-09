@@ -14,7 +14,7 @@ proc process_ai*(gorb: Gorb): Gorb =
         gorb.is_baby = false
 
     # Go to sleep
-    if gorb.state == GorbState.NONE and not is_day:
+    if gorb.state != GorbState.SLEEPING and not is_day and (gorb.energy >= gorb.sleep_requirement):
       gorb.state = GorbState.SLEEPING
     elif gorb.state == GorbState.SLEEPING and is_day:
       gorb.state = GorbState.NONE
@@ -69,7 +69,7 @@ proc process_ai*(gorb: Gorb): Gorb =
       randomize()
       gorb.wandering_direction = rand(1..4)
       randomize()
-      gorb.wandering_timer = rand(20..80)
+      gorb.wandering_timer = gorb.patience
     
     elif gorb.state == GorbState.WANDERING and gorb.wandering_timer > 0:
       if gorb.wandering_direction == 1:
@@ -83,9 +83,9 @@ proc process_ai*(gorb: Gorb): Gorb =
       gorb.wandering_timer -= 1
   
     if is_day:
-      gorb.energy -= 0.1
+      gorb.energy -= gorb.energy_expenditure
     else:
-      gorb.energy -= 0.02
+      gorb.energy -= gorb.energy_expenditure / 8
 
     # colour tint
     if gorb.energy < 4:
@@ -178,7 +178,10 @@ proc try_reproduce*(gorb: Gorb): Gorb =
       state: GorbState.NONE,
       energy: transfer_amount,
       speed: gorb.speed + (rand(-5..5) / 10).round(),
-      view_range: gorb.view_range + rand(-15..15)
+      view_range: gorb.view_range + rand(-15..15),
+      sleep_requirement: gorb.sleep_requirement + rand(-10..10).toFloat(),
+      energy_expenditure: gorb.energy_expenditure + rand(-0.05..0.05),
+      patience: gorb.patience + rand(-10..10)
     ))
 
     echo "a child has been born at (", gorb.position[0].round(), ",", gorb.position[1].round(), ")"
