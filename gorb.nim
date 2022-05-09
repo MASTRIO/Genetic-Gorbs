@@ -13,6 +13,12 @@ proc process_ai*(gorb: Gorb): Gorb =
       if gorb.baby_time <= 0:
         gorb.is_baby = false
 
+    # Go to sleep
+    if gorb.state == GorbState.NONE and not is_day:
+      gorb.state = GorbState.SLEEPING
+    elif gorb.state == GorbState.SLEEPING and is_day:
+      gorb.state = GorbState.NONE
+
     # Do something
     if gorb.state == GorbState.NONE or gorb.state == GorbState.WANDERING:
       try:
@@ -76,18 +82,44 @@ proc process_ai*(gorb: Gorb): Gorb =
         gorb.position[1] -= gorb.speed / 2
       gorb.wandering_timer -= 1
   
-    gorb.energy -= 0.1
+    if is_day:
+      gorb.energy -= 0.1
+    else:
+      gorb.energy -= 0.02
 
+    # colour tint
+    if gorb.energy < 4:
+      gorb.colour_tint = color(0, 0.1, 0.9, 1)
+    elif gorb.energy < 2:
+      gorb.colour_tint = color(0, 0.2, 0.8, 1)
+    elif gorb.energy < 3:
+      gorb.colour_tint = color(0, 0.2, 0.8, 1)
+    elif gorb.energy < 4:
+      gorb.colour_tint = color(0, 0.3, 0.7, 1)
+    elif gorb.energy < 5:
+      gorb.colour_tint = color(0, 0.4, 0.6, 1)
+    elif gorb.energy < 10:
+      gorb.colour_tint = color(0, 0.5, 0.5, 1)
+    elif gorb.energy < 20:
+      gorb.colour_tint = color(0, 0.6, 0.4, 1)
+    elif gorb.energy < 30:
+      gorb.colour_tint = color(0, 0.7, 0.3, 1)
+    elif gorb.energy < 50:
+      gorb.colour_tint = color(0, 0.8, 0.2, 1)
+    else:
+      gorb.colour_tint = color(0, 1.0, 0.0, 1)
+
+    # The part that makes them dead :) uwu
     if gorb.energy <= 0.0:
       gorb.alive = false
-      gorb.death_timer = 2000
+      gorb.death_timer = 1
       echo "a gorb has died at (", gorb.position[0].round(), ",", gorb.position[1].round(), ")"
   
     return gorb
   else:
     var gorb = gorb
 
-    gorb.death_timer -= 1
+    gorb.death_timer -= 0.001
     if gorb.death_timer <= 0:
       var list_counter = 0
       var found_self = false
@@ -128,7 +160,7 @@ proc detect_eating*(gorb: Gorb): Gorb =
   return gorb
 
 proc try_reproduce*(gorb: Gorb): Gorb =
-  if gorb.alive and gorb.energy > 350:
+  if gorb.alive and not gorb.is_baby and gorb.energy > 350:
     var gorb = gorb
 
     randomize()

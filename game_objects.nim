@@ -1,18 +1,19 @@
-import windy
+import windy, boxy
 
 type
   GorbState* = enum
     NONE
-    BORN
+    SLEEPING
     GATHERING
     WANDERING
 
   Gorb* = object
     id*: int
     alive*: bool
+    colour_tint*: Color
     is_baby*: bool
     baby_time*: int
-    death_timer*: int
+    death_timer*: float
     position*: Vec2
     target*: Vec2
     state*: GorbState

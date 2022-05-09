@@ -6,6 +6,7 @@ let windowSize = ivec2(1000, 600)
 let window = newWindow("Genetic gorbs", windowSize)
 makeContextCurrent(window)
 loadExtensions()
+
 let bxy = newBoxy()
 
 var paused = false
@@ -18,17 +19,14 @@ var fruit_spawn_timer = timer_max
 var they_are_alive = true
 
 # Load the images.
-bxy.addImage("background", readImage("assets/background/background.png"))
-
 bxy.addImage("gorb", readImage("assets/gorb/gorb.png"))
 bxy.addImage("smol_gorb", readImage("assets/baby/baby_gorb.png"))
 
 bxy.addImage("ded_gorb", readImage("assets/gorb/ded_gorb_sad.png"))
 bxy.addImage("ded_smol_gorb", readImage("assets/baby/ded_baby_pog.png"))
 
-bxy.addImage("gorb_gonna_die", readImage("assets/gorb/gorb_dying.png"))
-
-bxy.addImage("gorb_might_die", readImage("assets/gorb/gorb_dying_but_less.png"))
+bxy.addImage("sleeping_smol_gorb", readImage("assets/baby/sleepy_baby.png"))
+bxy.addImage("sleeping_gorb", readImage("assets/gorb/sleepy_gorb.png"))
 
 bxy.addImage("fruit", readImage("assets/fruit/fruit.png"))
 
@@ -78,6 +76,15 @@ for tree_num in 1..30:
 proc update() =
   if not paused:
 
+    # Day / Night cycle
+    time += 1
+    if time >= 2400:
+      if is_day:
+        is_day = false
+      else:
+        is_day = true
+      time = 0
+
     # process gorbs
     var gorb_count = 0
     for gorb in gorbs:
@@ -124,7 +131,11 @@ proc update() =
     for tree in trees:
       if tree.alive:
         randomize()
-        var chance_of_fruit = rand(30)
+        var chance_of_fruit = 0
+        if is_day:
+          chance_of_fruit = rand(30)
+        else:
+          chance_of_fruit = rand(150)
         if chance_of_fruit == 0:
           randomize()
           fruits.add(Fruit(
@@ -191,6 +202,9 @@ proc update() =
           if gorb.alive:
             living_gorbs += 1
         echo "There are ", living_gorbs, " gorbs still alive"
+      # Check time
+      of "time":
+        echo "the time is ", time, " and day is ", is_day
       else:
         echo "ERROR: invalid argument '", command[1], "'"
     else:
@@ -198,12 +212,15 @@ proc update() =
 
 # Called when it is time to draw a new frame.
 proc draw() =
-  let center = window.size.vec2 / 2
+  #let center = window.size.vec2 / 2
 
   # Start rendering new frame
-  bxy.beginFrame(windowSize)
+  bxy.beginFrame(window.size)
 
-  bxy.drawImage("background", center, 0)
+  if is_day:
+    bxy.drawRect(rect(vec2(0, 0), window.size.vec2), color(1, 1, 1, 1))
+  else:
+    bxy.drawRect(rect(vec2(0, 0), window.size.vec2), color(0.15, 0.15, 0.15, 1))
 
   for fruit in fruits:
     if on_screen(fruit.position, window.size.vec2, camera_offset):
@@ -212,34 +229,21 @@ proc draw() =
   for gorb in gorbs:
     if on_screen(gorb.position, window.size.vec2, camera_offset):
       if gorb.alive:
-        if gorb.is_baby:
-          bxy.drawImage("smol_gorb", gorb.position + camera_offset, 0)
-        else:
-          if gorb.energy < 4:
-            bxy.drawImage("gorb_gonna_die", gorb.position + camera_offset, -0.6)
-          elif gorb.energy < 2:
-            bxy.drawImage("gorb_gonna_die", gorb.position + camera_offset, -0.54)
-          elif gorb.energy < 3:
-            bxy.drawImage("gorb_gonna_die", gorb.position + camera_offset, -0.48)
-          elif gorb.energy < 4:
-            bxy.drawImage("gorb_gonna_die", gorb.position + camera_offset, -0.42)
-          elif gorb.energy < 5:
-            bxy.drawImage("gorb_gonna_die", gorb.position + camera_offset, -0.4)
-          elif gorb.energy < 10:
-            bxy.drawImage("gorb_gonna_die", gorb.position + camera_offset, -0.3)
-          elif gorb.energy < 20:
-            bxy.drawImage("gorb_gonna_die", gorb.position + camera_offset, -0.2)
-          elif gorb.energy < 30:
-            bxy.drawImage("gorb_gonna_die", gorb.position + camera_offset, -0.1)
-          elif gorb.energy < 50:
-            bxy.drawImage("gorb_might_die", gorb.position + camera_offset, 0)
+        if gorb.state != GorbState.SLEEPING:
+          if gorb.is_baby:
+            bxy.drawImage("smol_gorb", gorb.position + camera_offset, 0, gorb.colour_tint)
           else:
-            bxy.drawImage("gorb", gorb.position + camera_offset, 0)
+            bxy.drawImage("gorb", gorb.position + camera_offset, 0, gorb.colour_tint)
+        else:
+          if gorb.is_baby:
+            bxy.drawImage("sleeping_smol_gorb", gorb.position + camera_offset, 0, gorb.colour_tint)
+          else:
+            bxy.drawImage("sleeping_gorb", gorb.position + camera_offset, 0, gorb.colour_tint)
       else:
         if gorb.is_baby:
-          bxy.drawImage("ded_smol_gorb", gorb.position + camera_offset, 0)
+          bxy.drawImage("ded_smol_gorb", gorb.position + camera_offset, 0, color(0.8, 0, 0.05, gorb.death_timer))
         else:
-          bxy.drawImage("ded_gorb", gorb.position + camera_offset, 0)
+          bxy.drawImage("ded_gorb", gorb.position + camera_offset, 0, color(0.8, 0, 0.05, gorb.death_timer))
 
   for tree in trees:
     if on_screen(tree.position, window.size.vec2, camera_offset):

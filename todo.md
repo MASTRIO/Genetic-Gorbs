@@ -13,6 +13,10 @@
   - [ ] energy_expenditure
 - [ ] frame independence
 - [X] tree spawning + fruit spawning
-- [ ] stop underage sex
-- [ ] baby dying sprites
+- [X] stop underage sex
+- [X] baby dying sprites
 - [X] stop dead trees from producing apples
+- [X] make other window sizes work
+- [X] stop background from being a set size
+- [X] gorb dying colours
+- [ ] funny legs?

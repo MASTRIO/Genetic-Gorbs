@@ -1,6 +1,9 @@
 import game_objects
 import windy
 
+var time* = 0
+var is_day* = true
+
 var next_gorb_id = 0
 
 proc get_new_id*(): int =
