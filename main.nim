@@ -1,9 +1,9 @@
 import std/random
-import boxy, opengl, windy
+import boxy, opengl, windy, stopwatch
 import gorb, data, game_objects, tools
 
 let windowSize = ivec2(1000, 600)
-let window = newWindow("Genetic gorbs", windowSize)
+let window = newWindow("mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm", windowSize)
 makeContextCurrent(window)
 loadExtensions()
 
@@ -18,7 +18,10 @@ let timer_max = 2
 var fruit_spawn_timer = timer_max
 var they_are_alive = true
 
-var frame: int
+var frames: int
+var deltatime: Stopwatch
+var second_counter = 0.0
+var fps = 0
 
 # Load the images.
 bxy.addImage("gorb", readImage("assets/gorb/gorb.png"))
@@ -37,7 +40,7 @@ bxy.addImage("fruit", readImage("assets/fruit/fruit.png"))
 bxy.addImage("tree", readImage("assets/plants/tree.png"))
 bxy.addImage("ded_tree", readImage("assets/plants/dead_tree.png"))
 
-for num in 1..100:
+for num in 1..200:
   randomize()
   gorbs.add(Gorb(
     id: get_new_id(),
@@ -51,7 +54,8 @@ for num in 1..100:
     ),
     state: GorbState.NONE,
     energy: rand(40..180).toFloat(),
-    speed: rand(1..60) / 10,
+    normal_speed: rand(1..60) / 10,
+    wandering_speed: rand(1..40) / 10,
     view_range: rand(100..200),
     sleep_requirement: rand(80..100).toFloat(),
     energy_expenditure: rand(0.05..0.5),
@@ -83,11 +87,21 @@ for tree_num in 1..30:
 gorbs.delete(0)
 
 proc update() =
+  deltatime.stop()
+  #echo deltatime.secs, "s"
+  second_counter += deltatime.secs
+  deltatime.start()
+
+  if second_counter >= 1:
+    second_counter -= 1
+    fps = frames
+    frames = 0
+
   if not paused:
 
     # Day / Night cycle
     time += 1
-    if time >= 500: #2400:
+    if time >= 2400:
       if is_day:
         is_day = false
       else:
@@ -95,14 +109,16 @@ proc update() =
       time = 0
 
     # process gorbs
-    var gorb_count = 0
-    for gorb in gorbs:
-      gorbs[gorb_count] = gorb.process_ai()
-      gorbs[gorb_count] = gorb.detect_eating()
-      gorbs[gorb_count] = gorb.try_reproduce()
-      gorbs[gorb_count] = gorb.process_legs()
-      gorb_count += 1
-    
+    try:
+      var gorb_count = 0
+      for gorb in gorbs:
+        gorbs[gorb_count] = gorb.process_ai()
+        gorbs[gorb_count] = gorb.detect_eating()
+        gorbs[gorb_count] = gorb.try_reproduce()
+        gorbs[gorb_count] = gorb.process_legs()
+        gorb_count += 1
+    except: discard
+
     # Add gorbs from queue
     try:
       var queue_counter = 0
@@ -267,10 +283,12 @@ proc draw() =
       else:
         bxy.drawImage("ded_tree", tree.position + camera_offset, 0)
 
+  draw_text(bxy, vec2(10, 10), [100, 20], "fps: " & $fps)
+
   # End frame
   bxy.endFrame()
   window.swapBuffers()
-  inc frame
+  inc frames
 
 while not window.closeRequested:
   update()

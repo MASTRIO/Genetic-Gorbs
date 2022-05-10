@@ -1,5 +1,5 @@
 # Todo
-- [X] Make children functioning members of society
+- [X] Make children not blind
 - [ ] add sex
 - [ ] add tree growing
 - [X] fix wandering AI
@@ -19,4 +19,5 @@
 - [X] make other window sizes work
 - [X] stop background from being a set size
 - [X] gorb dying colours
-- [ ] funny legs?
+- [X] funny legs? (sort of)
+- [ ] fps

@@ -4,7 +4,7 @@ import windy, pixie
 var time* = 0
 var is_day* = true
 
-var max_legs* = 10
+var max_legs* = 0 #! do not set above 0 unless you want to explode :)
 var leg_count* = 0
 
 var next_gorb_id = 0
@@ -20,7 +20,7 @@ var gorbs* = @[
     position: vec2(0, 0),
     state: GorbState.NONE,
     energy: 1.0,
-    speed: 3.0
+    normal_speed: 3.0
   )
 ]
 
@@ -31,7 +31,7 @@ var gorb_queue* = @[
     position: vec2(0, 0),
     state: GorbState.NONE,
     energy: 100.0,
-    speed: 3.0
+    normal_speed: 3.0
   )
 ]
 

@@ -1,5 +1,7 @@
-import windy, boxy, pixie
+import boxy, windy, pixie
 import data
+
+let font = readFont("assets/fonts/IBMPlexMono-Bold.ttf")
 
 proc on_screen*(object_pos: Vec2, window_size: Vec2, camera_pos: Vec2): bool =
   if
@@ -31,3 +33,10 @@ proc draw_legs*(boxy: Boxy, image_pos: Vec2, foot_1: Vec2, foot_2: Vec2) =
   boxy.drawImage("legs", image_pos, 0)
 
   leg_count += 1
+
+proc draw_text*(boxy: Boxy, image_pos: Vec2, image_size: array[2, int], text: string) =
+  let image = newImage(image_size[0], image_size[1])
+  
+  image.fillText(font, text)
+  boxy.addImage("text", image)
+  boxy.drawImage("text", image_pos)

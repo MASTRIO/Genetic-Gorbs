@@ -43,6 +43,11 @@ proc process_ai*(gorb: Gorb): Gorb =
 
     # move
     if gorb.state == GorbState.GATHERING:
+      if gorb.is_baby:
+        gorb.current_speed = gorb.normal_speed / 2
+      else:
+        gorb.current_speed = gorb.normal_speed
+
       var fruit_exists = false
       for fruit in fruits:
         if fruit.position == gorb.target:
@@ -51,17 +56,13 @@ proc process_ai*(gorb: Gorb): Gorb =
 
       if fruit_exists:
         if gorb.target[0] > gorb.position[0]:
-          if gorb.is_baby: gorb.position[0] += gorb.speed / 2
-          else: gorb.position[0] += gorb.speed
+          gorb.position[0] += gorb.current_speed
         if gorb.target[0] < gorb.position[0]:
-          if gorb.is_baby: gorb.position[0] -= gorb.speed / 2
-          else: gorb.position[0] -= gorb.speed
+          gorb.position[0] -= gorb.current_speed
         if gorb.target[1] > gorb.position[1]:
-          if gorb.is_baby: gorb.position[1] += gorb.speed / 2
-          else: gorb.position[1] += gorb.speed
+          gorb.position[1] += gorb.current_speed
         if gorb.target[1] < gorb.position[1]:
-          if gorb.is_baby: gorb.position[1] -= gorb.speed / 2
-          else: gorb.position[1] -= gorb.speed
+          gorb.position[1] -= gorb.current_speed
       else:
         gorb.state = GorbState.NONE
 
@@ -72,14 +73,19 @@ proc process_ai*(gorb: Gorb): Gorb =
       gorb.wandering_timer = gorb.patience
     
     elif gorb.state == GorbState.WANDERING and gorb.wandering_timer > 0:
+      if gorb.is_baby:
+        gorb.current_speed = gorb.wandering_speed / 2
+      else:
+        gorb.current_speed = gorb.wandering_speed
+
       if gorb.wandering_direction == 1:
-        gorb.position[0] += gorb.speed / 2
+        gorb.position[0] += gorb.current_speed
       elif gorb.wandering_direction == 2:
-        gorb.position[0] -= gorb.speed / 2
+        gorb.position[0] -= gorb.current_speed
       elif gorb.wandering_direction == 3:
-        gorb.position[1] += gorb.speed / 2
+        gorb.position[1] += gorb.current_speed
       elif gorb.wandering_direction == 4:
-        gorb.position[1] -= gorb.speed / 2
+        gorb.position[1] -= gorb.current_speed
       gorb.wandering_timer -= 1
   
     if is_day:
@@ -177,7 +183,8 @@ proc try_reproduce*(gorb: Gorb): Gorb =
       position: gorb.position,
       state: GorbState.NONE,
       energy: transfer_amount,
-      speed: gorb.speed + (rand(-5..5) / 10).round(),
+      normal_speed: gorb.normal_speed + (rand(-5..5) / 10).round(),
+      wandering_speed: gorb.wandering_speed + (rand(-5..5) / 10).round(),
       view_range: gorb.view_range + rand(-15..15),
       sleep_requirement: gorb.sleep_requirement + rand(-10..10).toFloat(),
       energy_expenditure: gorb.energy_expenditure + rand(-0.05..0.05),
@@ -194,17 +201,17 @@ proc process_legs*(gorb: Gorb): Gorb =
   var gorb = gorb
   if gorb.previous_position != gorb.position:
     if gorb.previous_position[0] < gorb.position[0]:
-      gorb.leg_1_pos[0] -= 1
-      gorb.leg_2_pos[0] -= 1
+      gorb.leg_1_pos[0] -= gorb.current_speed
+      gorb.leg_2_pos[0] -= gorb.current_speed
     elif gorb.previous_position[0] > gorb.position[0]:
-      gorb.leg_1_pos[0] += 1
-      gorb.leg_2_pos[0] += 1
+      gorb.leg_1_pos[0] += gorb.current_speed
+      gorb.leg_2_pos[0] += gorb.current_speed
     if gorb.previous_position[1] < gorb.position[1]:
-      gorb.leg_1_pos[1] -= 1
-      gorb.leg_2_pos[1] -= 1
+      gorb.leg_1_pos[1] -= gorb.current_speed
+      gorb.leg_2_pos[1] -= gorb.current_speed
     elif gorb.previous_position[1] > gorb.position[1]:
-      gorb.leg_1_pos[1] += 1
-      gorb.leg_2_pos[1] += 1
+      gorb.leg_1_pos[1] += gorb.current_speed
+      gorb.leg_2_pos[1] += gorb.current_speed
     
     gorb.previous_position = gorb.position
   

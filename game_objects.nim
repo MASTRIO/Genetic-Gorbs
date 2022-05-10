@@ -24,7 +24,9 @@ type
     wandering_direction*: int
     view_range*: int
     energy*: float
-    speed*: float
+    current_speed*: float
+    normal_speed*: float
+    wandering_speed*: float
     sleep_requirement*: float
     energy_expenditure*: float
     patience*: int
