@@ -1,9 +1,17 @@
 # Todo
 - [X] Make children not blind
 - [ ] add sex
-- [ ] add tree growing
+- [X] add tree growing
 - [X] fix wandering AI
 - [ ] add quirks
+  - [X] Nocturnal
+  - [ ] Compassionate
+  - [ ] Greedy
+  - [X] Sleep deprived (podcast)
+  - [X] Farmer
+  - [ ] Hunter
+  - [ ] Cannibal
+  - [X] 1 Legged
 - [X] add day/night cycle
 - [ ] add wolves
 - [ ] add amogus
@@ -11,7 +19,12 @@
   - [X] patience
   - [X] sleep_requirement
   - [X] energy_expenditure
-- [ ] frame independence
+- [X] frame independence
+  - [X] day/night cycle
+  - [X] gorb movement
+  - [X] camera
+  - [X] fruit spawning
+  - [X] wandering timer
 - [X] tree spawning + fruit spawning
 - [X] stop underage sex
 - [X] baby dying sprites
@@ -20,4 +33,6 @@
 - [X] stop background from being a set size
 - [X] gorb dying colours
 - [X] funny legs? (sort of)
-- [ ] fps
+- [X] fps
+- [X] Click on gorb to view stats in console (and pause)
+- [X] Gorb breeding energy requirement

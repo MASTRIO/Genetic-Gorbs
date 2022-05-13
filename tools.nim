@@ -35,8 +35,10 @@ proc draw_legs*(boxy: Boxy, image_pos: Vec2, foot_1: Vec2, foot_2: Vec2) =
   leg_count += 1
 
 proc draw_text*(boxy: Boxy, image_pos: Vec2, image_size: array[2, int], text: string) =
-  let image = newImage(image_size[0], image_size[1])
-  
-  image.fillText(font, text)
-  boxy.addImage("text", image)
-  boxy.drawImage("text", image_pos)
+  try:
+    let image = newImage(image_size[0], image_size[1])
+    
+    image.fillText(font, text)
+    boxy.addImage("text", image)
+    boxy.drawImage("text", image_pos)
+  except: discard

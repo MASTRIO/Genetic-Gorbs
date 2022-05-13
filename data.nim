@@ -1,5 +1,15 @@
 import game_objects
-import windy, pixie
+import windy, pixie, stopwatch
+
+var frames*: int
+var timer*: Stopwatch
+var deltatime* = 0.0
+
+var second_counter* = 0.0
+var tenth_sec_counter* = 0.0
+
+var fps* = 0
+var lifetime* = 0.0
 
 var time* = 0
 var is_day* = true
@@ -15,7 +25,8 @@ proc get_new_id*(): int =
 
 var gorbs* = @[
   Gorb(
-    alive: true,
+    alive: false,
+    death_timer: 1,
     is_baby: false,
     position: vec2(0, 0),
     state: GorbState.NONE,
@@ -31,7 +42,8 @@ var gorb_queue* = @[
     position: vec2(0, 0),
     state: GorbState.NONE,
     energy: 100.0,
-    normal_speed: 3.0
+    normal_speed: 3.0,
+    reproduction_requirement: 999999999
   )
 ]
 

@@ -7,6 +7,10 @@ proc process_ai*(gorb: Gorb): Gorb =
   if gorb.alive:
     var gorb = gorb
 
+    if gorb.energy_expenditure <= 0.05:
+      randomize()
+      gorb.energy_expenditure += rand(0.05..0.1)
+
     # Age baby
     if gorb.is_baby:
       gorb.baby_time -= 1
@@ -14,24 +18,41 @@ proc process_ai*(gorb: Gorb): Gorb =
         gorb.is_baby = false
 
     # Go to sleep
-    if gorb.state != GorbState.SLEEPING and not is_day and (gorb.energy >= gorb.sleep_requirement):
-      gorb.state = GorbState.SLEEPING
-    elif gorb.state == GorbState.SLEEPING and is_day:
-      gorb.state = GorbState.NONE
+    if not (Quirk.SLEEP_DEPRIVED in gorb.quirks):
+      if Quirk.NOCTURNAL in gorb.quirks:
+        if gorb.state != GorbState.SLEEPING and is_day and (gorb.energy >= gorb.sleep_requirement):
+          gorb.state = GorbState.SLEEPING
+        elif gorb.state == GorbState.SLEEPING and not is_day:
+          gorb.state = GorbState.NONE
+      else:
+        if gorb.state != GorbState.SLEEPING and not is_day and (gorb.energy >= gorb.sleep_requirement):
+          gorb.state = GorbState.SLEEPING
+        elif gorb.state == GorbState.SLEEPING and is_day:
+          gorb.state = GorbState.NONE
 
     # Do something
     if gorb.state == GorbState.NONE or gorb.state == GorbState.WANDERING:
       try:
         randomize()
         var found_fruit = @[vec2(1000000000, 100000000)]
-        for fruit in fruits:
-          if
-            fruit.position[0] < gorb.position[0] + gorb.view_range.toFloat() and
-            fruit.position[0] > gorb.position[0] - gorb.view_range.toFloat() and
-            fruit.position[1] < gorb.position[1] + gorb.view_range.toFloat() and
-            fruit.position[1] > gorb.position[1] - gorb.view_range.toFloat()
-            :
-            found_fruit.add(fruit.position)
+        if Quirk.CANNIBAL in gorb.quirks:
+          for fruit in gorbs:
+            if
+              fruit.position[0] < gorb.position[0] + gorb.view_range.toFloat() and
+              fruit.position[0] > gorb.position[0] - gorb.view_range.toFloat() and
+              fruit.position[1] < gorb.position[1] + gorb.view_range.toFloat() and
+              fruit.position[1] > gorb.position[1] - gorb.view_range.toFloat()
+              :
+              found_fruit.add(fruit.position)
+        else:
+          for fruit in fruits:
+            if
+              fruit.position[0] < gorb.position[0] + gorb.view_range.toFloat() and
+              fruit.position[0] > gorb.position[0] - gorb.view_range.toFloat() and
+              fruit.position[1] < gorb.position[1] + gorb.view_range.toFloat() and
+              fruit.position[1] > gorb.position[1] - gorb.view_range.toFloat()
+              :
+              found_fruit.add(fruit.position)
         if found_fruit.len() > 1:
           randomize()
           gorb.target = found_fruit[rand(found_fruit.len() - 1)]
@@ -43,10 +64,16 @@ proc process_ai*(gorb: Gorb): Gorb =
 
     # move
     if gorb.state == GorbState.GATHERING:
-      if gorb.is_baby:
-        gorb.current_speed = gorb.normal_speed / 2
+      if Quirk.ONE_LEGGED in gorb.quirks:
+        if gorb.is_baby:
+          gorb.current_speed = gorb.normal_speed / 4
+        else:
+          gorb.current_speed = gorb.normal_speed / 2
       else:
-        gorb.current_speed = gorb.normal_speed
+        if gorb.is_baby:
+          gorb.current_speed = gorb.normal_speed / 2
+        else:
+          gorb.current_speed = gorb.normal_speed
 
       var fruit_exists = false
       for fruit in fruits:
@@ -56,13 +83,13 @@ proc process_ai*(gorb: Gorb): Gorb =
 
       if fruit_exists:
         if gorb.target[0] > gorb.position[0]:
-          gorb.position[0] += gorb.current_speed
+          gorb.position[0] += gorb.current_speed * deltatime
         if gorb.target[0] < gorb.position[0]:
-          gorb.position[0] -= gorb.current_speed
+          gorb.position[0] -= gorb.current_speed * deltatime
         if gorb.target[1] > gorb.position[1]:
-          gorb.position[1] += gorb.current_speed
+          gorb.position[1] += gorb.current_speed * deltatime
         if gorb.target[1] < gorb.position[1]:
-          gorb.position[1] -= gorb.current_speed
+          gorb.position[1] -= gorb.current_speed * deltatime
       else:
         gorb.state = GorbState.NONE
 
@@ -73,20 +100,28 @@ proc process_ai*(gorb: Gorb): Gorb =
       gorb.wandering_timer = gorb.patience
     
     elif gorb.state == GorbState.WANDERING and gorb.wandering_timer > 0:
-      if gorb.is_baby:
-        gorb.current_speed = gorb.wandering_speed / 2
+      if Quirk.ONE_LEGGED in gorb.quirks:
+        if gorb.is_baby:
+          gorb.current_speed = gorb.wandering_speed / 4
+        else:
+          gorb.current_speed = gorb.wandering_speed / 2
       else:
-        gorb.current_speed = gorb.wandering_speed
+        if gorb.is_baby:
+          gorb.current_speed = gorb.wandering_speed / 2
+        else:
+          gorb.current_speed = gorb.wandering_speed
 
       if gorb.wandering_direction == 1:
-        gorb.position[0] += gorb.current_speed
+        gorb.position[0] += gorb.current_speed * deltatime
       elif gorb.wandering_direction == 2:
-        gorb.position[0] -= gorb.current_speed
+        gorb.position[0] -= gorb.current_speed * deltatime
       elif gorb.wandering_direction == 3:
-        gorb.position[1] += gorb.current_speed
+        gorb.position[1] += gorb.current_speed * deltatime
       elif gorb.wandering_direction == 4:
-        gorb.position[1] -= gorb.current_speed
-      gorb.wandering_timer -= 1
+        gorb.position[1] -= gorb.current_speed * deltatime
+      
+      if tenth_sec_counter >= 0.1:
+        gorb.wandering_timer -= 1
   
     if is_day:
       gorb.energy -= gorb.energy_expenditure
@@ -152,13 +187,22 @@ proc detect_eating*(gorb: Gorb): Gorb =
   
     var counter = 0
     var found = false
-    for fruit in fruits:
-      if fruit.position == gorb.target:
-        found = true
-        break
-      counter += 1
-    if found:
-      fruits.delete(counter)
+    if Quirk.CANNIBAL in gorb.quirks:
+      for fruit in gorbs:
+        if fruit.position == gorb.target:
+          found = true
+          break
+        counter += 1
+      if found:
+        deletion_queue.add(counter)
+    else:
+      for fruit in fruits:
+        if fruit.position == gorb.target:
+          found = true
+          break
+        counter += 1
+      if found:
+        fruits.delete(counter)
   
     gorb.energy += 10.0
     gorb.state = GorbState.NONE
@@ -166,34 +210,59 @@ proc detect_eating*(gorb: Gorb): Gorb =
   return gorb
 
 proc try_reproduce*(gorb: Gorb): Gorb =
-  if gorb.alive and not gorb.is_baby and gorb.energy > 350:
-    var gorb = gorb
+  if gorb.alive and not gorb.is_baby and gorb.energy > gorb.reproduction_requirement:
+    if not (Quirk.FARMER in gorb.quirks):
+      var gorb = gorb
 
-    randomize()
-    let transfer_amount = rand(60..140).toFloat()
+      randomize()
+      let transfer_amount = rand((gorb.reproduction_requirement / 2)..gorb.reproduction_requirement)
 
-    gorb.energy -= transfer_amount
+      gorb.energy -= transfer_amount
 
-    randomize()
-    gorb_queue.add(Gorb(
-      id: get_new_id(),
-      alive: true,
-      is_baby: true,
-      baby_time: rand(1000..5000),
-      position: gorb.position,
-      state: GorbState.NONE,
-      energy: transfer_amount,
-      normal_speed: gorb.normal_speed + (rand(-5..5) / 10).round(),
-      wandering_speed: gorb.wandering_speed + (rand(-5..5) / 10).round(),
-      view_range: gorb.view_range + rand(-15..15),
-      sleep_requirement: gorb.sleep_requirement + rand(-10..10).toFloat(),
-      energy_expenditure: gorb.energy_expenditure + rand(-0.05..0.05),
-      patience: gorb.patience + rand(-10..10)
-    ))
+      randomize()
+      var new_gorb = Gorb(
+        id: get_new_id(),
+        alive: true,
+        is_baby: true,
+        baby_time: rand(1000..5000),
+        position: gorb.position,
+        state: GorbState.NONE,
+        energy: transfer_amount,
+        normal_speed: gorb.normal_speed + (rand(-5..5) / 10).round(),
+        wandering_speed: gorb.wandering_speed + (rand(-5..5) / 10).round(),
+        view_range: gorb.view_range + rand(-15..15),
+        sleep_requirement: gorb.sleep_requirement + rand(-10..10).toFloat().round(),
+        reproduction_requirement: gorb.reproduction_requirement + rand(-15.0..15.0).round(),
+        energy_expenditure: gorb.energy_expenditure + rand(-0.05..0.05).round(),
+        patience: gorb.patience + rand(-10..10)
+      )
 
-    echo "a child has been born at (", gorb.position[0].round(), ",", gorb.position[1].round(), ")"
+      for quirk in gorb.quirks:
+        randomize()
+        var chance_to_pass = rand(10)
+        if chance_to_pass == 0:
+          new_gorb.quirks.add(quirk)
 
-    return gorb
+      gorb_queue.add(new_gorb)
+
+      echo "a child has been born at (", gorb.position[0].round(), ",", gorb.position[1].round(), ")"
+
+      return gorb
+    else:
+      var gorb = gorb
+
+      randomize()
+      let transfer_amount = rand((gorb.reproduction_requirement / 1.2)..gorb.reproduction_requirement)
+      gorb.energy -= transfer_amount
+
+      randomize()
+      trees.add(Tree(
+        alive: true,
+        position: gorb.position,
+        life_remaining: (transfer_amount * rand(5.0..15.0)).toInt()
+      ))
+
+      return gorb
   
   return gorb
 

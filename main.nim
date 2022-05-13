@@ -1,6 +1,6 @@
-import std/random
-import boxy, opengl, windy, stopwatch
-import gorb, data, game_objects, tools
+import std/random, std/strutils
+import boxy, opengl, windy
+import gorb, data, game_objects, tools, stopwatch
 
 let windowSize = ivec2(1000, 600)
 let window = newWindow("mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm", windowSize)
@@ -12,20 +12,18 @@ let bxy = newBoxy()
 var paused = false
 
 var camera_offset = vec2(0, 0)
-let CAMERA_SPEED: float = 10
+let CAMERA_SPEED: float = 50
 
 let timer_max = 2
 var fruit_spawn_timer = timer_max
 var they_are_alive = true
 
-var frames: int
-var deltatime: Stopwatch
-var second_counter = 0.0
-var fps = 0
-
 # Load the images.
 bxy.addImage("gorb", readImage("assets/gorb/gorb.png"))
 bxy.addImage("smol_gorb", readImage("assets/baby/baby_gorb.png"))
+
+bxy.addImage("one_leg_baby", readImage("assets/baby/one_leg_baby.png"))
+bxy.addImage("one_leg_gorb", readImage("assets/gorb/one_leg_gorb.png"))
 
 bxy.addImage("legged_gorb", readImage("assets/gorb/gorb_with_legs.png"))
 
@@ -40,9 +38,9 @@ bxy.addImage("fruit", readImage("assets/fruit/fruit.png"))
 bxy.addImage("tree", readImage("assets/plants/tree.png"))
 bxy.addImage("ded_tree", readImage("assets/plants/dead_tree.png"))
 
-for num in 1..200:
+for num in 1..100:
   randomize()
-  gorbs.add(Gorb(
+  var new_gorb = Gorb(
     id: get_new_id(),
     leg_1_pos: vec2(18, 32),
     leg_2_pos: vec2(46, 32),
@@ -54,15 +52,23 @@ for num in 1..200:
     ),
     state: GorbState.NONE,
     energy: rand(40..180).toFloat(),
-    normal_speed: rand(1..60) / 10,
-    wandering_speed: rand(1..40) / 10,
+    normal_speed: rand(1..30).toFloat(),
+    wandering_speed: rand(1..20).toFloat(),
     view_range: rand(100..200),
     sleep_requirement: rand(80..100).toFloat(),
-    energy_expenditure: rand(0.05..0.5),
+    reproduction_requirement: rand(300..500).toFloat(),
+    energy_expenditure: rand(0.05..0.5).round(),
     patience: rand(60..120)
-  ))
+  )
 
-for fruit_num in 1..500:
+  randomize()
+  for num in 1..rand(1..3):
+    randomize()
+    new_gorb.quirks.add(QUIRK_LIST[rand(0..(QUIRK_LIST.len() - 1))])
+  
+  gorbs.add(new_gorb)
+
+for fruit_num in 1..1:
   randomize()
   fruits.add(Fruit(
     position: vec2(
@@ -87,21 +93,29 @@ for tree_num in 1..30:
 gorbs.delete(0)
 
 proc update() =
-  deltatime.stop()
+  timer.stop()
   #echo deltatime.secs, "s"
-  second_counter += deltatime.secs
-  deltatime.start()
+  deltatime = timer.secs * 10
+
+  second_counter += timer.secs
+  tenth_sec_counter += timer.secs
+
+  lifetime += timer.secs
+  timer.start()
+
+  if tenth_sec_counter >= 0.1:
+    tenth_sec_counter -= 0.1
 
   if second_counter >= 1:
     second_counter -= 1
+    time += 1
     fps = frames
     frames = 0
 
   if not paused:
 
     # Day / Night cycle
-    time += 1
-    if time >= 2400:
+    if time >= 10:
       if is_day:
         is_day = false
       else:
@@ -150,7 +164,8 @@ proc update() =
       ))
       fruit_spawn_timer = timer_max
     else:
-      fruit_spawn_timer -= 1
+      if tenth_sec_counter >= 0.1:
+        fruit_spawn_timer -= 1
   
     # Tree fruit spawning
     var tree_counter = 0
@@ -179,24 +194,25 @@ proc update() =
 
     # are they dead?
     if they_are_alive:
-      var a_gorb_lives = false
+      var gorbs_alive = 0
       for gorb in gorbs:
         if gorb.alive:
-          a_gorb_lives = true
+          gorbs_alive += 1
           break
-      if not a_gorb_lives:
+      if gorbs_alive < 1:
         they_are_alive = false
         echo "they are all dead :)"
+        echo "the simulation ran for ", lifetime.round(), " seconds or ", lifetime.round() / 60, " minutes or ", lifetime.round() / 60 / 60, " hours"
 
   # Camera controller
   if window.buttonDown[Button.KeyUp]:
-    camera_offset[1] += CAMERA_SPEED
+    camera_offset[1] += CAMERA_SPEED * deltatime
   if window.buttonDown[Button.KeyDown]:
-    camera_offset[1] -= CAMERA_SPEED
+    camera_offset[1] -= CAMERA_SPEED * deltatime
   if window.buttonDown[Button.KeyLeft]:
-    camera_offset[0] += CAMERA_SPEED
+    camera_offset[0] += CAMERA_SPEED * deltatime
   if window.buttonDown[Button.KeyRight]:
-    camera_offset[0] -= CAMERA_SPEED
+    camera_offset[0] -= CAMERA_SPEED * deltatime
   
   if window.buttonPressed[Button.KeySpace]:
     camera_offset = vec2(0, 0)
@@ -233,6 +249,17 @@ proc update() =
         echo "the time is ", time, " and day is ", is_day
       else:
         echo "ERROR: invalid argument '", command[1], "'"
+    # Goto gorb
+    of "goto":
+      case command[1]:
+      # with quirk
+      of "quirk":
+        for gorb in gorbs:
+          if QUIRK_LIST[command[2].parseInt()] in gorb.quirks:
+            camera_offset = gorb.position
+            paused = true
+      else:
+        echo "ERROR: invalid argument '", command[1], "'"
     else:
       echo "ERROR: command not recognised"
 
@@ -258,13 +285,19 @@ proc draw() =
       if gorb.alive:
         if gorb.state != GorbState.SLEEPING:
           if gorb.is_baby:
-            bxy.drawImage("smol_gorb", gorb.position + camera_offset, 0, gorb.colour_tint)
+            if Quirk.ONE_LEGGED in gorb.quirks:
+              bxy.drawImage("one_leg_baby", gorb.position + camera_offset, 0, gorb.colour_tint)
+            else:
+              bxy.drawImage("smol_gorb", gorb.position + camera_offset, 0, gorb.colour_tint)
           else:
             if leg_count < max_legs:
               draw_legs(bxy, gorb.position + camera_offset + vec2(0, 20), gorb.leg_1_pos, gorb.leg_2_pos)
               bxy.drawImage("gorb", gorb.position + camera_offset, 0, gorb.colour_tint)
             else:
-              bxy.drawImage("legged_gorb", gorb.position + camera_offset, 0, gorb.colour_tint)
+              if Quirk.ONE_LEGGED in gorb.quirks:
+                bxy.drawImage("one_leg_gorb", gorb.position + camera_offset, 0, gorb.colour_tint)
+              else:
+                bxy.drawImage("legged_gorb", gorb.position + camera_offset, 0, gorb.colour_tint)
         else:
           if gorb.is_baby:
             bxy.drawImage("sleeping_smol_gorb", gorb.position + camera_offset, 0, gorb.colour_tint)
@@ -289,6 +322,19 @@ proc draw() =
   bxy.endFrame()
   window.swapBuffers()
   inc frames
+
+window.onButtonPress = proc(button: Button) =
+  if button == MouseLeft:
+    for gorb in gorbs:
+      if
+        window.mousePos[0] > (gorb.position[0] - 30 + camera_offset[0]).toInt() and
+        window.mousePos[1] > (gorb.position[1] - 30 + camera_offset[1]).toInt() and
+        window.mousePos[0] < (gorb.position[0] + 30 + camera_offset[0]).toInt() and
+        window.mousePos[1] < (gorb.position[1] + 30 + camera_offset[1]).toInt()
+        :
+        echo $gorb
+        paused = true
+        break
 
 while not window.closeRequested:
   update()
